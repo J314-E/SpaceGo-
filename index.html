@@ -68,6 +68,28 @@ canvas{display:block;width:100%;height:100vh;background:radial-gradient(ellipse 
 #stopFollowBtn{flex:0 0 auto;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid rgba(255,255,255,.42);border-radius:6px;background:rgba(0,0,0,.16);color:#fff;font-size:19px;line-height:1;cursor:pointer}
 #stopFollowBtn:active{background:rgba(0,0,0,.35)}
 #dateTimeDisplay{position:fixed;top:12px;left:12px;background:rgba(12,12,16,.88);color:#e6eef8;padding:8px 14px;border-radius:8px;font-size:13px;z-index:10002;display:none;border:1px solid rgba(255,255,255,.07);font-family:monospace}
+/* ═══ GRABACIÓN / CAPTURA ═══ */
+#recBar{position:fixed;left:12px;top:50%;transform:translateY(-50%);z-index:10005;display:none;flex-direction:column;align-items:center;gap:8px;padding:8px 6px;background:rgba(27,108,255,.94);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+#recBar button{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,.45);background:rgba(0,0,0,.16);color:#fff;font-size:14px;font-weight:700;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+#recBar button:disabled{opacity:.4;cursor:default}
+#recRecBtn{background:#dc2626!important;border-radius:50%!important;border-color:#fff!important;font-size:16px!important}
+#recRecBtn.stop{border-radius:6px!important}
+#recTime{color:#fff;font-size:11px;font-family:monospace;min-height:14px;text-align:center;white-space:nowrap}
+#recModal,#recPreview{position:fixed;inset:0;z-index:30000;display:none;align-items:center;justify-content:center}
+#recPreview{z-index:31000}
+#recModal .bg,#recPreview .bg{position:absolute;inset:0;backdrop-filter:blur(8px);background:rgba(0,0,0,.5)}
+#recModalWin,#recPreviewWin{position:relative;background:#0d0d11;border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,.07);color:#e9eef8;max-height:85vh;overflow-y:auto}
+#recModalWin{width:480px;max-width:93%}
+#recPreviewWin{width:min(92vw,960px);max-width:92vw}
+#recModalWin h3,#recPreviewWin h3{margin:0 0 12px;font-size:16px;color:#c8d8ff}
+#recPreviewMedia{display:flex;justify-content:center;background:#000;border-radius:8px;min-height:120px}
+#recPreviewMedia video,#recPreviewMedia img{max-width:100%;max-height:60vh;border-radius:8px}
+/* Ocultar grupos durante la captura de Pantalla completa (según Grabación o captura) */
+body.rec-off-paneles #editSidebar,body.rec-off-paneles #launchGallery,body.rec-off-paneles #loadGallery{display:none!important}
+body.rec-off-barras #bottomBar,body.rec-off-barras #extrasBar,body.rec-off-barras #explodeBar,body.rec-off-barras #topRight{display:none!important}
+body.rec-off-ventanas #overlay,body.rec-off-ventanas #confirmModal,body.rec-off-ventanas #saveModal,body.rec-off-ventanas #timeModal,body.rec-off-ventanas #explodeModal,body.rec-off-ventanas #pixelEditorOverlay,body.rec-off-ventanas #tutRoot{display:none!important}
+body.rec-off-otros #tutNotice,body.rec-off-otros #followIndicator,body.rec-off-otros #ahoraNotice,body.rec-off-otros #impToastBox,body.rec-off-otros #physicsToast,body.rec-off-otros #sytmToast{display:none!important}
+body.rec-off-datos #dateTimeDisplay,body.rec-off-datos #dataPanel{display:none!important}
 /* Aviso del tutorial al entrar */
 #tutNotice{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:10002;display:none;align-items:center;gap:10px;background:rgba(27,108,255,.94);color:#fff;padding:8px 10px 8px 14px;border-radius:10px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.4);max-width:calc(100vw - 24px)}
 #tutNoticeBtn{background:#fff;color:#1651d6;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;white-space:nowrap}
@@ -373,6 +395,68 @@ body.device-mobile input:focus,body.device-mobile textarea:focus,body.device-mob
 <body>
 <canvas id="canvas"></canvas>
 
+<!-- ═══ GRABACIÓN / CAPTURA ═══ -->
+<div id="recBar">
+  <button id="recCloseBtn" title="Cerrar">✕</button>
+  <button id="recRecBtn" title="Grabar">●</button>
+  <button id="recPauseBtn" title="Iniciar / pausar / continuar">II</button>
+  <button id="recGearBtn" title="Configuración">⚙</button>
+  <div id="recTime"></div>
+</div>
+<div id="recModal">
+  <div class="bg"></div>
+  <div id="recModalWin">
+    <h3>⚙️ Grabación o captura</h3>
+    <div class="cfgRow"><span class="cfgLabel">Tipo</span>
+      <div class="radioGroup">
+        <label><input name="recMode" type="radio" value="video" checked> Video</label>
+        <label><input name="recMode" type="radio" value="photo"> Foto</label>
+      </div>
+    </div>
+    <div id="recVideoOpts">
+      <div class="cfgRow"><span class="cfgLabel">Calidad</span>
+        <div class="radioGroup">
+          <label><input name="recQuality" type="radio" value="high" checked> Alta</label>
+          <label><input name="recQuality" type="radio" value="low"> Media</label>
+        </div>
+      </div>
+      <div class="cfgRow"><span class="cfgLabel">Cuadros por segundo</span>
+        <div class="radioGroup">
+          <label><input name="recFps" type="radio" value="30" checked> 30</label>
+          <label><input name="recFps" type="radio" value="60"> 60</label>
+        </div>
+      </div>
+    </div>
+    <div class="cfgRow"><span class="cfgLabel">Fuente</span>
+      <div class="radioGroup">
+        <label><input name="recSource" type="radio" value="lienzo" checked> Solo simulación</label>
+        <label><input name="recSource" type="radio" value="pantalla"> Pantalla completa</label>
+      </div>
+    </div>
+    <div class="cfgLabel" style="margin:14px 0 4px">Grabar o capturar:</div>
+    <div class="cfgRow"><span class="cfgLabel">Paneles</span><label class="toggle"><input type="checkbox" data-rec="paneles" data-screen-only checked> Sí</label></div>
+    <div class="cfgRow"><span class="cfgLabel">Barras</span><label class="toggle"><input type="checkbox" data-rec="barras" data-screen-only checked> Sí</label></div>
+    <div class="cfgRow"><span class="cfgLabel">Ventanas</span><label class="toggle"><input type="checkbox" data-rec="ventanas" data-screen-only checked> Sí</label></div>
+    <div class="cfgRow"><span class="cfgLabel">Otros (notificaciones, seguimiento, etc.)</span><label class="toggle"><input type="checkbox" data-rec="otros" data-screen-only checked> Sí</label></div>
+    <div class="cfgRow"><span class="cfgLabel">Puntero y clics</span><label class="toggle"><input type="checkbox" data-rec="puntero" checked> Sí</label></div>
+    <div class="cfgRow"><span class="cfgLabel">Color del puntero y clics</span><input type="color" id="recColor" value="#60a5fa"></div>
+    <div class="cfgRow"><span class="cfgLabel">Datos y fecha</span><label class="toggle"><input type="checkbox" data-rec="datos" checked> Sí</label></div>
+    <div class="small" id="recNote" style="margin-top:8px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px"><button id="recModalClose" class="btn primary">Listo</button></div>
+  </div>
+</div>
+
+<div id="recPreview">
+  <div class="bg"></div>
+  <div id="recPreviewWin">
+    <h3>Vista previa</h3>
+    <div id="recPreviewMedia"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button id="recPreviewClose" class="btn ghost">Cerrar</button>
+      <button id="recPreviewDownload" class="btn primary">⬇ Descargar</button>
+    </div>
+  </div>
+</div>
 <div id="tutNotice">
   <span>💡 ¿Sabes cómo jugar el juego?</span>
   <button id="tutNoticeBtn">Tutorial</button>
@@ -841,6 +925,7 @@ body.device-mobile input:focus,body.device-mobile textarea:focus,body.device-mob
 <div id="extrasBar">
   <button class="btn" id="extrasBack">◀ Volver</button>
   <button class="btn" id="extrasClear">Limpiar partículas</button>
+  <button class="btn" id="extrasRecord">Grabación o captura</button>
 </div>
 
 <!-- ═══ EXPLOTAR BAR ═══ -->
@@ -2187,6 +2272,7 @@ function _ntShowNow(title,rows,ms,key,kind,extra){
     const persist=(ms===Infinity);
     if(!_impToastBox){
       _impToastBox=document.createElement("div");
+      _impToastBox.id="impToastBox";
       _impToastBox.style.cssText="position:fixed;top:52px;left:12px;width:360px;max-width:92vw;display:flex;flex-direction:column;gap:6px;z-index:10004;pointer-events:none";
       document.body.appendChild(_impToastBox);
       _ntEnsurePile();
@@ -9312,6 +9398,8 @@ const TUT_STEPS=[
    text:"Cierra la barra Extras y regresa a la barra principal. No cambia el sistema."},
   {t:"#extrasClear",on:TUT_OPEN_EXTRAS,off:TUT_CLOSE_EXTRAS,title:"Extras: Limpiar partículas",
    text:"Quita de la escena las partículas y los restos visuales generados por efectos como las explosiones. No elimina los cuerpos del sistema. Atajo: <b>L</b>."},
+  {t:"#extrasRecord",on:TUT_OPEN_EXTRAS,off:TUT_CLOSE_EXTRAS,title:"Extras: Grabación o captura",
+   text:"Abre la barra de <b>grabación</b>. Con <b>II</b> o el botón rojo inicias la grabación; <b>II</b> pausa y continúa, y el botón rojo la detiene y muestra una vista previa para descargarla. <b>⚙</b> elige video o foto, la calidad, la fuente (solo la simulación o toda la pantalla) y qué mostrar. Nada se guarda en el navegador."},
   {t:"#editBtn",title:"Editar ▾",
    text:"Muestra la lista de objetos del sistema. Al elegir uno se abre su panel de propiedades, donde puedes cambiarlo en vivo, sin pausar. Te explicamos sus secciones en los pasos de Editar."},
   {t:"#undoBtn",title:"↩ Deshacer",
@@ -10719,6 +10807,272 @@ window.addEventListener("keydown",e=>{const k=e.key.toLowerCase();
   else if(k==="a"||k==="q"){if(launchMode){stopGalleryLaunch();}}
   else if(k==="escape"&&launchMode)exitLaunchMode()
 },{passive:!0});
+
+/* ═══════════════ GRABACIÓN / CAPTURA ═══════════════
+   Dos fuentes:
+   · Solo simulación: graba el lienzo (sin permisos). Paneles, barras y
+     ventanas nunca entran al video. Sí se dibujan el puntero/clics y los datos.
+   · Pantalla completa: graba lo que se ve en la pestaña (pide permiso). Aquí
+     los Sí/No de paneles, barras, ventanas y otros sí aplican: lo que digas
+     No se oculta mientras grabas.
+   Nada de esto se guarda en IndexedDB. */
+const recOpts={mode:"video",quality:"high",fps:30,source:"lienzo",color:"#60a5fa",show:{paneles:true,barras:true,puntero:true,ventanas:true,otros:true,datos:true}};
+let _recSession=null,_recPreviewUrl=null,_recBusy=false;
+const _recEl=id=>document.getElementById(id);
+const _recWait=ms=>new Promise(r=>setTimeout(r,ms));
+function recToast(msg){if(typeof sytmToast==="function")sytmToast(msg);else alert(msg)}
+function recStamp(){const d=new Date(),p=n=>String(n).padStart(2,"0");return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes())+p(d.getSeconds())}
+function recElapsedMs(s){return (s.pausedAt?s.pausedAt:Date.now())-s.startedAt-s.pausedMs}
+function fmtRecTime(ms){const t=Math.floor(ms/1000),m=Math.floor(t/60),s=t%60;return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+function _recRgba(hex,a){const n=parseInt(hex.slice(1),16);return "rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+Math.max(0,a).toFixed(3)+")"}
+
+// Ocultar grupos durante Pantalla completa (solo si el usuario dijo No)
+function applyRecHides(on){
+  const screen=recOpts.source==="pantalla";
+  ["paneles","barras","ventanas","otros","datos"].forEach(g=>
+    document.body.classList.toggle("rec-off-"+g,!!on&&screen&&!recOpts.show[g]));
+}
+
+// Puntero y clics (solo se dibujan en la fuente «Solo simulación»)
+const _recPtr={x:0,y:0,inside:false},_recRipples=[];
+function _recCanvasXY(ev){const r=canvas.getBoundingClientRect();return{x:(ev.clientX-r.left)*canvas.width/r.width,y:(ev.clientY-r.top)*canvas.height/r.height}}
+canvas.addEventListener("pointermove",ev=>{const p=_recCanvasXY(ev);_recPtr.x=p.x;_recPtr.y=p.y;_recPtr.inside=true});
+canvas.addEventListener("pointerleave",()=>{_recPtr.inside=false});
+canvas.addEventListener("pointerdown",ev=>{const p=_recCanvasXY(ev);_recRipples.push({x:p.x,y:p.y,t:performance.now()})});
+
+let _recComp=null,_recCtx=null;
+function recDrawFrame(){
+  if(!_recComp){_recComp=document.createElement("canvas");_recCtx=_recComp.getContext("2d")}
+  if(_recComp.width!==canvas.width||_recComp.height!==canvas.height){_recComp.width=canvas.width;_recComp.height=canvas.height}
+  const g=_recCtx;
+  g.drawImage(canvas,0,0);
+  const k=canvas.width/(canvas.getBoundingClientRect().width||1);
+  const col=recOpts.color;
+  if(recOpts.show.puntero){
+    const now=performance.now();
+    for(let i=_recRipples.length-1;i>=0;i--){
+      const rp=_recRipples[i],age=(now-rp.t)/500;
+      if(age>=1){_recRipples.splice(i,1);continue}
+      g.beginPath();g.arc(rp.x,rp.y,(12+age*34)*k,0,Math.PI*2);
+      g.strokeStyle=_recRgba(col,1-age);g.lineWidth=3*k;g.stroke();
+    }
+    if(_recPtr.inside){
+      g.beginPath();g.arc(_recPtr.x,_recPtr.y,5*k,0,Math.PI*2);
+      g.fillStyle="rgba(255,255,255,.9)";g.fill();g.strokeStyle=col;g.lineWidth=2*k;g.stroke();
+    }
+  }
+  if(recOpts.show.datos){
+    const lines=[];
+    const dt=_recEl("dateTimeDisplay");
+    if(dt&&getComputedStyle(dt).display!=="none"&&dt.textContent.trim())lines.push(dt.textContent.trim());
+    const dp=_recEl("dataPanel");
+    if(dp&&getComputedStyle(dp).display!=="none")(dp.innerText||dp.textContent).split("\n").map(s=>s.trim()).filter(Boolean).forEach(s=>lines.push(s));
+    if(lines.length){
+      const fs=13*k,pad=8*k;
+      g.font=fs+"px monospace";g.textBaseline="top";
+      let y=pad;
+      lines.forEach(t=>{
+        const w=g.measureText(t).width;
+        g.fillStyle="rgba(12,12,16,.75)";g.fillRect(pad*0.5,y-pad*0.5,w+pad,fs+pad);
+        g.fillStyle="#e6eef8";g.fillText(t,pad,y);
+        y+=fs+pad*1.5;
+      });
+    }
+  }
+}
+
+function updateRecBar(){
+  const s=_recSession,isPhoto=recOpts.mode==="photo";
+  const rb=_recEl("recRecBtn"),pb=_recEl("recPauseBtn"),tm=_recEl("recTime");
+  rb.textContent=s?"■":"●";
+  rb.title=isPhoto?"Capturar foto":(s?"Parar y ver vista previa":"Iniciar grabación");
+  rb.classList.toggle("stop",!!s);
+  pb.disabled=isPhoto;
+  pb.textContent=(s&&s.pausedAt)?"▶":"II";
+  pb.title=s?(s.pausedAt?"Continuar":"Pausar"):"Iniciar grabación";
+  tm.textContent=s?("● "+fmtRecTime(recElapsedMs(s))+(s.pausedAt?" (pausa)":"")):"";
+}
+
+function showRecBar(){_recEl("recBar").style.display="flex";updateRecBar()}
+
+function _recLoop(s){
+  if(_recSession!==s)return;
+  requestAnimationFrame(()=>_recLoop(s));
+  if(s.pausedAt)return;
+  const now=performance.now();
+  if(now-s.lastDraw<1000/recOpts.fps-2)return;
+  s.lastDraw=now;
+  recDrawFrame();
+}
+
+// Crea el grabador sobre un stream y empieza a grabar
+function _recBeginRecording(stream){
+  const mime=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"].find(m=>MediaRecorder.isTypeSupported(m))||"";
+  let rec;
+  try{rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:recOpts.quality==="high"?8000000:3000000})}
+  catch(e){recToast("No se pudo iniciar la grabación");stream.getTracks().forEach(t=>t.stop());applyRecHides(false);return null}
+  const s={rec:rec,stream:stream,chunks:[],mime:mime||"video/webm",startedAt:Date.now(),pausedMs:0,pausedAt:null,timer:null,discard:false,lastDraw:0};
+  rec.ondataavailable=e=>{if(e.data&&e.data.size)s.chunks.push(e.data)};
+  rec.onstop=()=>recFinish(s);
+  const vt=stream.getVideoTracks()[0];
+  if(vt)vt.addEventListener("ended",()=>{if(_recSession===s)recStop(false)}); // dejó de compartir
+  rec.start(1000);
+  _recSession=s;
+  s.timer=setInterval(updateRecBar,500);
+  updateRecBar();
+  return s;
+}
+
+function recStart(){
+  if(_recSession||_recBusy)return;
+  if(recOpts.source==="pantalla"){recStartScreen();return}
+  if(typeof MediaRecorder==="undefined"||!HTMLCanvasElement.prototype.captureStream){recToast("Este navegador no puede grabar el lienzo");return}
+  recDrawFrame();
+  const s=_recBeginRecording(_recComp.captureStream(recOpts.fps));
+  if(s)_recLoop(s);
+}
+
+async function recStartScreen(){
+  if(typeof MediaRecorder==="undefined"||!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){recToast("Este navegador no permite capturar la pantalla");return}
+  _recBusy=true;
+  let stream;
+  try{stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:recOpts.fps},audio:false,preferCurrentTab:true})}
+  catch(e){_recBusy=false;recToast("Captura de pantalla cancelada");return}
+  applyRecHides(true);
+  await _recWait(200);             // deja que la interfaz termine de ocultarse
+  _recBusy=false;
+  if(!_recBeginRecording(stream))applyRecHides(false);
+}
+
+function recPauseToggle(){
+  const s=_recSession;if(!s)return;
+  if(s.rec.state==="recording"){s.rec.pause();s.pausedAt=Date.now()}
+  else if(s.rec.state==="paused"){s.rec.resume();s.pausedMs+=Date.now()-s.pausedAt;s.pausedAt=null}
+  updateRecBar();
+}
+
+function recStop(discard){
+  const s=_recSession;if(!s)return;
+  s.discard=!!discard;
+  if(s.rec.state!=="inactive")s.rec.stop();
+}
+
+function recFinish(s){
+  clearInterval(s.timer);
+  s.stream.getTracks().forEach(t=>t.stop());
+  applyRecHides(false);
+  _recSession=null;
+  updateRecBar();
+  if(s.discard)return;
+  const blob=new Blob(s.chunks,{type:s.mime.split(";")[0]});
+  if(!blob.size){recToast("No se grabó nada");return}
+  showRecPreview(URL.createObjectURL(blob),"video","webm");
+}
+
+function recCapturePhoto(){
+  if(recOpts.source==="pantalla"){recCapturePhotoScreen();return}
+  recDrawFrame();
+  _recComp.toBlob(b=>{
+    if(!b){recToast("No se pudo capturar la imagen");return}
+    showRecPreview(URL.createObjectURL(b),"image","png");
+  },"image/png");
+}
+
+async function recCapturePhotoScreen(){
+  if(_recBusy||_recSession)return;
+  _recBusy=true;
+  let stream;
+  try{stream=await navigator.mediaDevices.getDisplayMedia({video:true,audio:false,preferCurrentTab:true})}
+  catch(e){_recBusy=false;recToast("Captura cancelada");return}
+  applyRecHides(true);
+  await _recWait(250);
+  const v=document.createElement("video");
+  v.muted=true;v.srcObject=stream;
+  try{await v.play()}catch(e){}
+  if(!v.videoWidth)await new Promise(r=>{v.onloadedmetadata=()=>r()});
+  await _recWait(120);
+  const c=document.createElement("canvas");
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+  stream.getTracks().forEach(t=>t.stop());
+  v.srcObject=null;
+  applyRecHides(false);
+  _recBusy=false;
+  c.toBlob(b=>{
+    if(!b){recToast("No se pudo capturar la imagen");return}
+    showRecPreview(URL.createObjectURL(b),"image","png");
+  },"image/png");
+}
+
+function showRecPreview(url,kind,ext){
+  const box=_recEl("recPreviewMedia");
+  box.innerHTML="";
+  const el=document.createElement(kind==="video"?"video":"img");
+  el.src=url;
+  if(kind==="video")el.controls=true;
+  box.appendChild(el);
+  if(_recPreviewUrl&&_recPreviewUrl!==url)URL.revokeObjectURL(_recPreviewUrl);
+  _recPreviewUrl=url;
+  _recEl("recPreviewDownload").onclick=()=>{
+    const a=document.createElement("a");
+    a.href=url;a.download="simulador-"+recStamp()+"."+ext;
+    document.body.appendChild(a);a.click();a.remove();
+  };
+  _recEl("recPreview").style.display="flex";
+}
+function closeRecPreview(){
+  _recEl("recPreview").style.display="none";
+  _recEl("recPreviewMedia").innerHTML="";
+  if(_recPreviewUrl){URL.revokeObjectURL(_recPreviewUrl);_recPreviewUrl=null}
+}
+
+// ── Panel de ajustes (⚙) ──
+function syncRecModal(){
+  document.querySelectorAll('[name="recMode"]').forEach(r=>r.checked=(r.value===recOpts.mode));
+  document.querySelectorAll('[name="recQuality"]').forEach(r=>r.checked=(r.value===recOpts.quality));
+  document.querySelectorAll('[name="recFps"]').forEach(r=>r.checked=(Number(r.value)===recOpts.fps));
+  document.querySelectorAll('[name="recSource"]').forEach(r=>r.checked=(r.value===recOpts.source));
+  document.querySelectorAll('[data-rec]').forEach(c=>c.checked=!!recOpts.show[c.dataset.rec]);
+  _recEl("recColor").value=recOpts.color;
+  readRecModal();
+}
+function readRecModal(){
+  const m=document.querySelector('[name="recMode"]:checked');if(m)recOpts.mode=m.value;
+  const q=document.querySelector('[name="recQuality"]:checked');if(q)recOpts.quality=q.value;
+  const f=document.querySelector('[name="recFps"]:checked');if(f)recOpts.fps=Number(f.value);
+  const s=document.querySelector('[name="recSource"]:checked');if(s)recOpts.source=s.value;
+  recOpts.color=_recEl("recColor").value;
+  document.querySelectorAll('[data-rec]').forEach(c=>{recOpts.show[c.dataset.rec]=c.checked});
+  const photo=recOpts.mode==="photo",screen=recOpts.source==="pantalla";
+  _recEl("recVideoOpts").style.display=photo?"none":"block";
+  document.querySelectorAll('[data-screen-only]').forEach(c=>c.disabled=!screen);
+  _recEl("recNote").textContent=screen
+    ? "Pantalla completa graba lo que se ve en la pestaña (pide permiso). Lo que pongas en No se oculta mientras grabas. La barra de grabación sí sale en el video en este modo."
+    : "Solo simulación graba el lienzo, sin permisos. Paneles, barras, ventanas y notificaciones no aparecen en el video; elige Pantalla completa para incluirlos.";
+  updateRecBar();
+}
+
+// ── Eventos ──
+document.getElementById("extrasRecord").onclick=()=>{document.getElementById("extrasBack").click();showRecBar()};
+_recEl("recCloseBtn").onclick=()=>{
+  if(_recSession)recStop(true);
+  _recEl("recBar").style.display="none";
+  _recEl("recModal").style.display="none";
+};
+_recEl("recRecBtn").onclick=()=>{
+  if(recOpts.mode==="photo")recCapturePhoto();
+  else if(_recSession)recStop(false);
+  else recStart();
+};
+_recEl("recPauseBtn").onclick=()=>{
+  if(_recSession)recPauseToggle();
+  else recStart();
+};
+_recEl("recGearBtn").onclick=()=>{syncRecModal();_recEl("recModal").style.display="flex"};
+_recEl("recModalClose").onclick=()=>{readRecModal();_recEl("recModal").style.display="none"};
+_recEl("recPreviewClose").onclick=closeRecPreview;
+document.querySelectorAll('[name="recMode"],[name="recQuality"],[name="recFps"],[name="recSource"],[data-rec],#recColor').forEach(el=>el.addEventListener("input",readRecModal));
+document.querySelectorAll('[name="recMode"],[name="recQuality"],[name="recFps"],[name="recSource"],[data-rec],#recColor').forEach(el=>el.addEventListener("change",readRecModal));
 
 resetSystem();
 // Al cargar la página, restaura las preferencias guardadas en IndexedDB
